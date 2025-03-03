@@ -1,0 +1,48 @@
+name: myapp
+description: "A new Flutter project."
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  gap: ^3.0.1
+  gsheets: ^0.5.0
+  shared_preferences: ^2.3.2
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  fl_chart: ^0.70.2
+  chewie: ^1.10.0
+  video_player: ^2.9.3
+  iconify_flutter: ^0.0.7
+  hugeicons: ^0.0.7
+  url_launcher: ^6.3.1
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: "^0.14.1"
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/.env
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/logo_app.png"
+  adaptive_icon_foreground: "assets/logo_app.png"
+  adaptive_icon_background: "#5F8F3C"
+  min_sdk_android: 21
