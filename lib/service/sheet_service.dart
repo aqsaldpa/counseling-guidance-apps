@@ -1,13 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:gsheets/gsheets.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/constant/string.dart';
 import 'package:myapp/model/user_model.dart';
 import 'package:myapp/service/user_service.dart';
-
-Map<String, dynamic> credentials = jsonDecode(dotenv.env['credentials']!);
 
 class SheetService {
   static final gsheets = GSheets(credentials);
@@ -19,8 +15,7 @@ class SheetService {
 
   static Future<void> init() async {
     try {
-      final spreadsheet =
-          await gsheets.spreadsheet(dotenv.env['spreadsheetId']!);
+      final spreadsheet = await gsheets.spreadsheet(spreadSheetId);
       final worksheets = spreadsheet.sheets;
 
       for (var sheet in worksheets) {
@@ -309,12 +304,19 @@ class SheetService {
         bool excelDateMatch = false;
         final excelDateTime = excelDateToDateTime(rowDate);
         if (excelDateTime != null) {
-          final formattedExcelDate =
+          final formattedExcelDateDDMM =
               DateFormat('dd/MM/yyyy').format(excelDateTime);
-          debugPrint("Excel date converted: $rowDate -> $formattedExcelDate");
+          final formattedExcelDateMMDD =
+              DateFormat('MM/dd/yyyy').format(excelDateTime);
+
+          debugPrint(
+              "Excel date converted DD/MM: $rowDate -> $formattedExcelDateDDMM");
+          debugPrint(
+              "Excel date converted MM/DD: $rowDate -> $formattedExcelDateMMDD");
 
           excelDateMatch =
-              normalizeDate(formattedExcelDate) == normalizedInputDate;
+              normalizeDate(formattedExcelDateDDMM) == normalizedInputDate ||
+                  normalizeDate(formattedExcelDateMMDD) == normalizedInputDate;
 
           if (!excelDateMatch &&
               rowDate.length == 4 &&
@@ -323,8 +325,35 @@ class SheetService {
           }
         }
 
+        bool additionalDateMatch = false;
+        try {
+          final inputParts = inputDate.split('/');
+          if (inputParts.length == 3) {
+            final day = int.parse(inputParts[0]);
+            final month = int.parse(inputParts[1]);
+            final year = int.parse(inputParts[2]);
+
+            // Create alternative date format (MM/dd/yyyy)
+            final alternativeDate = "$month/$day/$year";
+            final normalizedAlternativeDate = normalizeDate(alternativeDate);
+
+            additionalDateMatch =
+                normalizedRowDate == normalizedAlternativeDate;
+
+            if (additionalDateMatch) {
+              debugPrint(
+                  "Match found with alternative date format: $alternativeDate");
+            }
+          }
+        } catch (e) {
+          debugPrint("Error in additional date parsing: $e");
+        }
+
         if (nameMatches &&
-            (directDateMatch || normalizedDateMatch || excelDateMatch)) {
+            (directDateMatch ||
+                normalizedDateMatch ||
+                excelDateMatch ||
+                additionalDateMatch)) {
           final user = UserModel(
             id: rows[i][0],
             nama: rows[i][1],

@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool isLoading = true;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
   PersonalityModel? personalityData;
   List<JobRecommendationModel> jobRecommendations = [];
 
@@ -31,13 +32,18 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOut,
     );
+
+    _slideAnimation = Tween<double>(begin: 40, end: 0).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutQuad,
+    ));
 
     loadUserData();
   }
@@ -79,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             jobRecommendations = jobs;
           });
         } catch (e) {
-          print('Error loading personality data: $e');
+          debugPrint('Error loading personality data: $e');
         }
       }
 
@@ -97,172 +103,301 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    print(user?.tglLahir ?? '-');
     return CustomScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: greenBorders,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
         title: const Text(
-          'Profil',
+          'Profil Saya',
           style: TextStyle(
-            color: Colors.white,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
         elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
-        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          if (!isLoading)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: loadUserData,
+              tooltip: 'Refresh data',
+            ),
+        ],
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                greenBorders,
+                greenSecondary,
+              ],
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: greenBorders.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+        ),
       ),
       child: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: greenBorders,
-              ),
-            )
+          ? _buildLoadingView()
           : FadeTransition(
               opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Gap(24),
+              child: AnimatedBuilder(
+                animation: _slideAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _slideAnimation.value),
+                    child: child,
+                  );
+                },
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Gap(16),
 
-                      // Personal information
-                      Text(
-                        'Informasi Pribadi',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        ),
-                      ),
-
-                      const Gap(12),
-
-                      // Profile details card
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            // Added name to the personal information section
-                            _buildInfoItem(
-                                'Nama', user?.nama ?? '-', Icons.person),
-                            _buildDivider(),
-                            _buildInfoItem('ID Siswa', user?.id ?? '-',
-                                Icons.badge_outlined),
-                            _buildDivider(),
-                            _buildInfoItem('Kelas', user?.kelas ?? '-',
-                                Icons.school_outlined),
-                            _buildDivider(),
-                            _buildInfoItem(
-                                'Jenis Kelamin',
-                                user?.jenisKelamin ?? '-',
-                                Icons.person_outline),
-                            _buildDivider(),
-                            _buildInfoItem(
-                                'Tempat Lahir',
-                                user?.tempatLahir ?? '-',
-                                Icons.location_city_outlined),
-                            _buildDivider(),
-                            _buildInfoItem(
-                                'Tanggal Lahir',
-                                user?.formattedBirthDate ?? '-',
-                                Icons.calendar_today_outlined),
-                            _buildDivider(),
-                            _buildInfoItem(
-                                'Umur',
-                                '${user?.umur.toString()} Tahun',
-                                Icons.cake_outlined),
-                          ],
-                        ),
-                      ),
-
-                      const Gap(24),
-
-                      // Personality type section (if available)
-                      Text(
-                        'Hasil Tes Kepribadian',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        ),
-                      ),
-
-                      const Gap(12),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.psychology_alt,
-                                  color: Colors.orange.shade700,
-                                  size: 20,
+                        // Profile header with avatar
+                        Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      greenBorders.withOpacity(0.7),
+                                      greenBorders,
+                                    ],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: greenBorders.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
                                 ),
-                                const Gap(8),
-                                Text(
-                                  'Tipe RIASEC',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800,
+                                child: Center(
+                                  child: Text(
+                                    user?.nama?.isNotEmpty == true
+                                        ? user!.nama![0].toUpperCase()
+                                        : "?",
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const Gap(16),
+                              ),
+                              const Gap(16),
+                              Text(
+                                user?.nama ?? "Pengguna",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                              const Gap(4),
+                              Text(
+                                user?.kelas ?? "Kelas tidak tersedia",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
-                            // Show personality type if available
-                            if (user?.kepribadian != null &&
-                                user!.kepribadian!.isNotEmpty)
-                              _buildPersonalityResult(user!.kepribadian!)
-                            else
-                              _buildNoPersonalityData(),
+                        const Gap(32),
+
+                        // Personal information section with heading
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: greenBorders.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.person_outline_rounded,
+                                size: 20,
+                                color: greenBorders,
+                              ),
+                            ),
+                            const Gap(12),
+                            Text(
+                              'Informasi Pribadi',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const Gap(24),
-                    ],
+
+                        const Gap(16),
+
+                        // Profile details card with modern styling
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildInfoItem('ID Siswa', user?.id ?? '-',
+                                  Icons.badge_rounded),
+                              _buildDivider(),
+                              _buildInfoItem(
+                                  'Jenis Kelamin',
+                                  user?.jenisKelamin ?? '-',
+                                  Icons.person_outline_rounded),
+                              _buildDivider(),
+                              _buildInfoItem(
+                                  'Tempat Lahir',
+                                  user?.tempatLahir ?? '-',
+                                  Icons.location_city_rounded),
+                              _buildDivider(),
+                              _buildInfoItem(
+                                  'Tanggal Lahir',
+                                  user?.formattedBirthDate ?? '-',
+                                  Icons.calendar_today_rounded),
+                              _buildDivider(),
+                              _buildInfoItem(
+                                  'Umur',
+                                  '${user?.umur.toString()} Tahun',
+                                  Icons.cake_rounded),
+                            ],
+                          ),
+                        ),
+
+                        const Gap(36),
+
+                        // Personality type section heading
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.psychology_rounded,
+                                size: 20,
+                                color: Colors.orange.shade700,
+                              ),
+                            ),
+                            const Gap(12),
+                            Text(
+                              'Hasil Tes Kepribadian',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const Gap(16),
+
+                        // Personality results card
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Show personality type if available
+                              if (user?.kepribadian != null &&
+                                  user!.kepribadian!.isNotEmpty)
+                                _buildPersonalityResult(user!.kepribadian!)
+                              else
+                                _buildNoPersonalityData(),
+                            ],
+                          ),
+                        ),
+                        const Gap(24),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildLoadingView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(
+              color: greenBorders,
+              strokeWidth: 4,
+            ),
+          ),
+          const Gap(24),
+          Text(
+            'Memuat profil...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -274,118 +409,272 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundColor: color.withOpacity(0.2),
-          child: Text(
-            typeCode,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: color,
+        // Beautiful personality type avatar with gradient and shadow
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.7),
+                color,
+              ],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              typeCode,
+              style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
-        const Gap(16),
+
+        const Gap(20),
+
+        // Personality type name
         Text(
           personalityType,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.grey.shade800,
+            color: color,
           ),
           textAlign: TextAlign.center,
         ),
-        const Gap(8),
-        // Gunakan data deskripsi dari model personality jika tersedia
-        Text(
-          personalityData?.deskripsi ?? "Memuat deskripsi...",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.grey.shade700,
-            fontSize: 14,
-          ),
-        ),
-        const Gap(16),
+
+        const Gap(12),
+
+        // Description with styled container
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            personalityData?.deskripsi ?? "Memuat deskripsi...",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 15,
+              height: 1.6,
+            ),
+          ),
+        ),
+
+        const Gap(24),
+
+        // Recommendations section with better styling
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.2),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             children: [
-              const Text(
-                'Mata Pelajaran Keterampilan yang Sesuai:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
+              // Icon with title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: color,
+                      size: 20,
+                    ),
+                  ),
+                  const Gap(12),
+                  Text(
+                    'Mata Pelajaran Keterampilan yang Sesuai',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ],
               ),
-              const Gap(8),
+
+              const Gap(16),
+
+              // Job recommendations with better styling
               if (jobRecommendations.isNotEmpty)
                 Column(
                   children: [
                     for (int i = 0; i < jobRecommendations.length && i < 3; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          jobRecommendations[i].pekerjaan,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: color,
-                          ),
-                          textAlign: TextAlign.center,
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withOpacity(0.1),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: color,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Gap(12),
+                            Expanded(
+                              child: Text(
+                                jobRecommendations[i].pekerjaan,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     if (jobRecommendations.length > 3)
-                      Text(
-                        '... dan ${jobRecommendations.length - 3} lainnya',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                          fontStyle: FontStyle.italic,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextButton(
+                          onPressed: () {
+                            // Logic to show all job recommendations
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: color,
+                          ),
+                          child: Text(
+                            'Lihat ${jobRecommendations.length - 3} lainnya',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
                   ],
                 )
               else
-                Text(
-                  'Memuat rekomendasi...',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  textAlign: TextAlign.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: color,
+                        ),
+                      ),
+                      const Gap(12),
+                      Text(
+                        'Memuat rekomendasi...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
             ],
           ),
         ),
-        const Gap(16),
-        ElevatedButton.icon(
-          onPressed: () {
-            Navigator.pushNamed(context, RoutesName.kepribadianScreen);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 45),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+
+        const Gap(24),
+
+        // Button to view personality details with modern styling
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, RoutesName.kepribadianScreen);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
             ),
-          ),
-          icon: const Icon(
-            Icons.psychology_alt_outlined,
-            color: Colors.white,
-          ),
-          label: const Text(
-            'Lihat Detail Kepribadian',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+            icon: const Icon(
+              Icons.psychology_alt_rounded,
+              color: Colors.white,
+            ),
+            label: const Text(
+              'Lihat Detail Kepribadian',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -394,36 +683,78 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildNoPersonalityData() {
-    return Center(
+    return Container(
+      padding: const EdgeInsets.all(30),
       child: Column(
         children: [
-          Icon(
-            Icons.quiz_outlined,
-            size: 40,
-            color: Colors.grey.shade400,
-          ),
-          const Gap(8),
-          Text(
-            'Belum ada data kepribadian',
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 14,
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.quiz_rounded,
+              size: 40,
+              color: Colors.grey.shade400,
             ),
           ),
-          const Gap(16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/test_intro');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: greenBorders,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          const Gap(20),
+          Text(
+            'Belum Ada Data Kepribadian',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const Gap(12),
+          Text(
+            'Lakukan tes kepribadian untuk mengetahui tipe RIASEC dan rekomendasi karir yang sesuai untuk Anda.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const Gap(24),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: greenBorders.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, RoutesName.testIntroScreen);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: greenBorders,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text(
+                'Mulai Tes Kepribadian',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            child: const Text('Mulai Tes Kepribadian'),
           ),
         ],
       ),
@@ -433,25 +764,25 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildInfoItem(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 16,
+        vertical: 14,
+        horizontal: 20,
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: greenBorders.withOpacity(0.1),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
               color: greenBorders,
-              size: 18,
+              size: 20,
             ),
           ),
-          const Gap(12),
+          const Gap(16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,15 +790,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
                   ),
                 ),
-                const Gap(2),
+                const Gap(4),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
                   ),
@@ -482,10 +813,11 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildDivider() {
     return Divider(
-      color: Colors.grey.shade200,
+      color: Colors.grey.shade100,
       height: 1,
-      indent: 16,
-      endIndent: 16,
+      thickness: 1,
+      indent: 20,
+      endIndent: 20,
     );
   }
 }

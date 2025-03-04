@@ -456,7 +456,7 @@ class _RiasecTestScreenState extends State<RiasecTestScreen> {
                   child: Column(
                     children: [
                       const Text(
-                        'Apakah pernyataan berikut sesuai dengan diri Anda?',
+                        'Pilih pernyataan yang sesuai dengan diri anda',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,

@@ -7,7 +7,7 @@ class QuestionItem extends StatefulWidget {
   final int index;
   final Color categoryColor;
   final Function(int) onToggle;
-  final String currentCategory; // Added parameter to track category changes
+  final String currentCategory;
 
   const QuestionItem({
     super.key,
@@ -27,7 +27,7 @@ class _QuestionItemState extends State<QuestionItem>
   bool isVideoPlaying = false;
   bool isVideoLoading = false;
   final VideoControllerManager _controllerManager = VideoControllerManager();
-  late String _lastCategory; // Store the last category to detect changes
+  late String _lastCategory;
 
   @override
   void initState() {
@@ -71,96 +71,121 @@ class _QuestionItemState extends State<QuestionItem>
     final String text = widget.question['text'];
     final String videoUrl = widget.question['videoUrl'] ?? '';
 
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Video thumbnail or player
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                children: [
-                  // Show video player or thumbnail
-                  if (isVideoPlaying)
-                    _buildVideoPlayer(videoUrl, text)
-                  else
-                    _buildVideoThumbnail(),
-
-                  // Play button or close button
-                  if (!isVideoPlaying)
-                    _buildPlayButton()
-                  else
-                    _buildCloseButton(),
-
-                  // Loading overlay
-                  if (isVideoLoading) _buildLoadingOverlay(),
-                ],
-              ),
-            ),
-          ),
-
-          // Question text and checkbox
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Checkbox on the left
-                GestureDetector(
-                  onTap: () => widget.onToggle(widget.index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isChecked
-                            ? widget.categoryColor
-                            : Colors.grey.shade400,
-                        width: 2,
-                      ),
-                      color:
-                          isChecked ? widget.categoryColor : Colors.transparent,
-                      boxShadow: isChecked
-                          ? [
-                              BoxShadow(
-                                color: widget.categoryColor.withOpacity(0.3),
-                                spreadRadius: 1,
-                                blurRadius: 3,
-                                offset: const Offset(0, 1),
-                              )
-                            ]
-                          : null,
-                    ),
-                    child: isChecked
-                        ? const Icon(Icons.check, color: Colors.white, size: 20)
-                        : null,
-                  ),
-                ),
-                const Gap(16),
-
-                // Question text
-                Expanded(
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade800,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => widget.onToggle(widget.index),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Video thumbnail or player
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Stack(
+                    children: [
+                      // Show video player or thumbnail
+                      if (isVideoPlaying)
+                        _buildVideoPlayer(videoUrl, text)
+                      else
+                        _buildVideoThumbnail(),
+
+                      // Play button or close button
+                      if (!isVideoPlaying)
+                        _buildPlayButton()
+                      else
+                        _buildCloseButton(),
+
+                      // Loading overlay
+                      if (isVideoLoading) _buildLoadingOverlay(),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Question text and checkbox with improved styling
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Modern animation checkbox
+                    GestureDetector(
+                      onTap: () => widget.onToggle(widget.index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        width: 28,
+                        height: 28,
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isChecked
+                                ? widget.categoryColor
+                                : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                          color: isChecked
+                              ? widget.categoryColor
+                              : Colors.transparent,
+                          boxShadow: isChecked
+                              ? [
+                                  BoxShadow(
+                                    color:
+                                        widget.categoryColor.withOpacity(0.4),
+                                    spreadRadius: 1,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  )
+                                ]
+                              : null,
+                        ),
+                        child: isChecked
+                            ? const Icon(Icons.check,
+                                color: Colors.white, size: 20)
+                            : null,
+                      ),
+                    ),
+                    const Gap(16),
+
+                    // Question text with improved typography
+                    Expanded(
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade800,
+                          height: 1.5,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -184,7 +209,7 @@ class _QuestionItemState extends State<QuestionItem>
           end: Alignment.bottomRight,
           colors: [
             widget.categoryColor.withOpacity(0.1),
-            widget.categoryColor.withOpacity(0.2),
+            widget.categoryColor.withOpacity(0.3),
           ],
         ),
       ),
@@ -192,7 +217,7 @@ class _QuestionItemState extends State<QuestionItem>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Animated play icon
+            // Animated play icon with improved styling
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.all(16),
@@ -201,10 +226,10 @@ class _QuestionItemState extends State<QuestionItem>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: widget.categoryColor.withOpacity(0.3),
-                    spreadRadius: 1,
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: widget.categoryColor.withOpacity(0.5),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -215,12 +240,12 @@ class _QuestionItemState extends State<QuestionItem>
               ),
             ),
             const Gap(16),
-            // Instruction text
+            // Instruction text with modern styling
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -233,15 +258,15 @@ class _QuestionItemState extends State<QuestionItem>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.touch_app, color: widget.categoryColor),
+                  Icon(Icons.touch_app, color: widget.categoryColor, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    "SENTUH UNTUK MELIHAT VIDEO",
+                    "LIHAT VIDEO",
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: widget.categoryColor,
-                      letterSpacing: 0.5,
+                      letterSpacing: 1,
                     ),
                   ),
                 ],
@@ -268,7 +293,7 @@ class _QuestionItemState extends State<QuestionItem>
             _controllerManager.pauseAll();
 
             // Simulate loading time (remove in production)
-            Future.delayed(const Duration(milliseconds: 1000), () {
+            Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted) {
                 setState(() {
                   isVideoLoading = false;
@@ -286,16 +311,16 @@ class _QuestionItemState extends State<QuestionItem>
 
   Widget _buildCloseButton() {
     return Positioned(
-      top: 8,
-      right: 8,
+      top: 12,
+      right: 12,
       child: Material(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withOpacity(0.6),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(30),
         ),
         child: InkWell(
           customBorder: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(30),
           ),
           onTap: () {
             // Stop the video and show thumbnail
@@ -333,6 +358,7 @@ class _QuestionItemState extends State<QuestionItem>
               'Memuat video...',
               style: TextStyle(
                 color: Colors.white,
+                fontWeight: FontWeight.w500,
                 shadows: [
                   Shadow(
                     offset: const Offset(0, 1),

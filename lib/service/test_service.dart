@@ -92,9 +92,8 @@ class RiasecTestService {
       // Determine column indices
       int idColumn = 0;
       int categoryColumn = 1;
-      int questionTypeColumn = 2;
-      int questionColumn = 3;
-      int videoUrlColumn = 4;
+      int questionColumn = 2;
+      int videoUrlColumn = 3;
 
       // Clear existing cache
       _questionCache.clear();
@@ -120,8 +119,6 @@ class RiasecTestService {
           'id': id,
           'category': category,
           'text': row.length > questionColumn ? row[questionColumn] : "",
-          'type':
-              row.length > questionTypeColumn ? row[questionTypeColumn] : "",
           'videoUrl': row.length > videoUrlColumn ? row[videoUrlColumn] : "",
           'isChecked': false,
         };

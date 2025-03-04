@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -69,6 +71,10 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   bool hasError = false;
   double loadingProgress = 0.0;
   bool isCompleted = false;
+  bool showControls = true;
+
+  // Auto-hide controls after a few seconds
+  Timer? _hideControlsTimer;
 
   @override
   void initState() {
@@ -93,6 +99,20 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
       initializeVideoPlayer();
     }
+  }
+
+  void _resetHideControlsTimer() {
+    _hideControlsTimer?.cancel();
+    setState(() {
+      showControls = true;
+    });
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && controller.value.isPlaying) {
+        setState(() {
+          showControls = false;
+        });
+      }
+    });
   }
 
   @override
@@ -124,6 +144,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (mounted) {
         await controller.play();
         controllerManager.pauseAllExcept(controller);
+        _resetHideControlsTimer();
 
         setState(() {
           isInitialized = true;
@@ -174,6 +195,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (!isCompleted) {
         setState(() {
           isCompleted = true;
+          showControls = true;
         });
 
         controller.seekTo(Duration.zero);
@@ -199,6 +221,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   void dispose() {
     debugPrint('Disposing video player for URL: ${widget.videoUrl}');
+    _hideControlsTimer?.cancel();
     controller.removeListener(videoPlayerListener);
     controllerManager.unregisterController(controller);
     controller.dispose();
@@ -209,6 +232,8 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     setState(() {
       if (controller.value.isPlaying) {
         controller.pause();
+        showControls = true;
+        _hideControlsTimer?.cancel();
       } else {
         if (isCompleted) {
           controller.seekTo(Duration.zero);
@@ -218,6 +243,7 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         }
         controller.play();
         controllerManager.pauseAllExcept(controller);
+        _resetHideControlsTimer();
       }
     });
   }
@@ -231,121 +257,189 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     if (hasError) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, color: Colors.red, size: 48),
-            SizedBox(height: 16),
-            Text(
-              'Tidak dapat memutar video',
-              style: TextStyle(color: Colors.black),
-              textAlign: TextAlign.center,
-            ),
-          ],
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              SizedBox(height: 16),
+              Text(
+                'Tidak dapat memutar video',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (!isInitialized) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.blue),
+      return Container(
+        color: Colors.black,
+        child: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
       );
     }
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        AspectRatio(
-          aspectRatio: controller.value.aspectRatio,
-          child: VideoPlayer(controller),
-        ),
-        Positioned.fill(
-          child: GestureDetector(
-            onTap: togglePlayPause,
-            child: Container(
-              color: Colors.transparent,
-              child: !controller.value.isPlaying
-                  ? Center(
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        size: 60,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    )
-                  : Container(),
-            ),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showControls = !showControls;
+          if (showControls) {
+            _resetHideControlsTimer();
+          } else {
+            _hideControlsTimer?.cancel();
+          }
+        });
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Video player
+          AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: VideoPlayer(controller),
           ),
-        ),
-        if (isBuffering)
-          Container(
-            color: Colors.black.withOpacity(0.3),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: Colors.white),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${(loadingProgress * 100).toInt()}% Loaded',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ],
+
+          // Play/pause tap area
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: togglePlayPause,
+              child: Container(
+                color: Colors.transparent,
               ),
             ),
           ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 40,
-            color: Colors.black.withOpacity(0.4),
-            child: Row(
-              children: [
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(
-                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                  ),
-                  onPressed: togglePlayPause,
+
+          // Center play/pause button
+          if (showControls || !controller.value.isPlaying)
+            AnimatedOpacity(
+              opacity: showControls ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black38,
+                  shape: BoxShape.circle,
                 ),
-                Text(
-                  formatDuration(controller.value.position),
-                  style: const TextStyle(color: Colors.white),
+                child: Icon(
+                  controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  size: 40,
+                  color: Colors.white,
                 ),
-                Expanded(
-                  child: SliderTheme(
-                    data: const SliderThemeData(
-                      trackHeight: 2,
-                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-                    ),
-                    child: Slider(
-                      value:
-                          controller.value.position.inMilliseconds.toDouble(),
-                      min: 0,
-                      max: controller.value.duration.inMilliseconds.toDouble(),
-                      onChanged: (value) {
-                        final newPosition =
-                            Duration(milliseconds: value.toInt());
-                        controller.seekTo(newPosition);
-                      },
-                      activeColor: Colors.blue,
-                      inactiveColor: Colors.grey.shade400,
-                    ),
-                  ),
-                ),
-                Text(
-                  formatDuration(controller.value.duration),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(width: 8),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+
+          // Buffering indicator
+          if (isBuffering)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.white),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(loadingProgress * 100).toInt()}% Loaded',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Bottom controls overlay
+          if (showControls)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: showControls ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.only(top: 30, bottom: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Progress slider
+                      SliderTheme(
+                        data: SliderThemeData(
+                          trackHeight: 4,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 6),
+                          overlayShape:
+                              const RoundSliderOverlayShape(overlayRadius: 14),
+                          thumbColor: Colors.white,
+                          activeTrackColor: Colors.red.shade600,
+                          inactiveTrackColor: Colors.white.withOpacity(0.3),
+                          overlayColor: Colors.red.shade200.withOpacity(0.4),
+                        ),
+                        child: Slider(
+                          value: controller.value.position.inMilliseconds
+                              .toDouble(),
+                          min: 0,
+                          max: controller.value.duration.inMilliseconds
+                              .toDouble(),
+                          onChanged: (value) {
+                            final newPosition =
+                                Duration(milliseconds: value.toInt());
+                            controller.seekTo(newPosition);
+                          },
+                        ),
+                      ),
+
+                      // Time and controls row
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            // Current position
+                            Text(
+                              formatDuration(controller.value.position),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+
+                            const Spacer(),
+
+                            // Duration
+                            Text(
+                              formatDuration(controller.value.duration),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

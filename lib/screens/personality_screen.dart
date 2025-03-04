@@ -254,6 +254,7 @@ class _PersonalityScreenState extends State<PersonalityScreen>
             const Gap(24),
             ElevatedButton.icon(
               onPressed: () {
+                Navigator.pop(context);
                 Navigator.pushNamed(context, RoutesName.testIntroScreen);
               },
               style: ElevatedButton.styleFrom(
