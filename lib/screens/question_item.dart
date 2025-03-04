@@ -8,6 +8,7 @@ class QuestionItem extends StatefulWidget {
   final Color categoryColor;
   final Function(int) onToggle;
   final String currentCategory;
+  final int navigationCounter; // Add this field
 
   const QuestionItem({
     super.key,
@@ -16,6 +17,7 @@ class QuestionItem extends StatefulWidget {
     required this.categoryColor,
     required this.onToggle,
     required this.currentCategory,
+    required this.navigationCounter, // Add this parameter
   });
 
   @override
@@ -28,19 +30,22 @@ class _QuestionItemState extends State<QuestionItem>
   bool isVideoLoading = false;
   final VideoControllerManager _controllerManager = VideoControllerManager();
   late String _lastCategory;
-
+  late int _lastNavigationCounter;
   @override
   void initState() {
     super.initState();
     _lastCategory = widget.currentCategory;
+    _lastNavigationCounter = widget.navigationCounter;
   }
 
   @override
   void didUpdateWidget(QuestionItem oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // If category changed, reset video state to thumbnail
-    if (widget.currentCategory != _lastCategory) {
+    // Reset video if category changed OR navigation counter changed
+    if (widget.currentCategory != _lastCategory ||
+        widget.navigationCounter != _lastNavigationCounter) {
+      // Reset video state
       if (isVideoPlaying) {
         _controllerManager.pauseAll();
         setState(() {
@@ -49,6 +54,7 @@ class _QuestionItemState extends State<QuestionItem>
         });
       }
       _lastCategory = widget.currentCategory;
+      _lastNavigationCounter = widget.navigationCounter;
     }
   }
 

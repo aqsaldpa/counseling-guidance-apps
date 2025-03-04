@@ -406,280 +406,118 @@ class _ProfileScreenState extends State<ProfileScreen>
     final color = PersonalityModel.getTypeColor(personalityType);
     final typeCode = personalityType.substring(0, 1);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Beautiful personality type avatar with gradient and shadow
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.7),
-                color,
-              ],
-            ),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
+    return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      // Beautiful personality type avatar with gradient and shadow
+      Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.7),
+              color,
             ],
           ),
-          child: Center(
-            child: Text(
-              typeCode,
-              style: const TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-
-        const Gap(20),
-
-        // Personality type name
-        Text(
-          personalityType,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-          textAlign: TextAlign.center,
-        ),
-
-        const Gap(12),
-
-        // Description with styled container
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
               color: color.withOpacity(0.3),
-              width: 1,
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
-          ),
+          ],
+        ),
+        child: Center(
           child: Text(
-            personalityData?.deskripsi ?? "Memuat deskripsi...",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontSize: 15,
-              height: 1.6,
-            ),
-          ),
-        ),
-
-        const Gap(24),
-
-        // Recommendations section with better styling
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              // Icon with title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.star_rounded,
-                      color: color,
-                      size: 20,
-                    ),
-                  ),
-                  const Gap(12),
-                  Text(
-                    'Mata Pelajaran Keterampilan yang Sesuai',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                ],
-              ),
-
-              const Gap(16),
-
-              // Job recommendations with better styling
-              if (jobRecommendations.isNotEmpty)
-                Column(
-                  children: [
-                    for (int i = 0; i < jobRecommendations.length && i < 3; i++)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withOpacity(0.1),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${i + 1}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: color,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const Gap(12),
-                            Expanded(
-                              child: Text(
-                                jobRecommendations[i].pekerjaan,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (jobRecommendations.length > 3)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: TextButton(
-                          onPressed: () {
-                            // Logic to show all job recommendations
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: color,
-                          ),
-                          child: Text(
-                            'Lihat ${jobRecommendations.length - 3} lainnya',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: color,
-                        ),
-                      ),
-                      const Gap(12),
-                      Text(
-                        'Memuat rekomendasi...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        const Gap(24),
-
-        // Button to view personality details with modern styling
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, RoutesName.kepribadianScreen);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
-            ),
-            icon: const Icon(
-              Icons.psychology_alt_rounded,
+            typeCode,
+            style: const TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
-            label: const Text(
-              'Lihat Detail Kepribadian',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+        ),
+      ),
+
+      const Gap(20),
+
+      // Personality type name
+      Text(
+        personalityType,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+        textAlign: TextAlign.center,
+      ),
+
+      const Gap(12),
+
+      // Description with styled container
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          personalityData?.deskripsi ?? "Memuat deskripsi...",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 15,
+            height: 1.6,
+          ),
+        ),
+      ),
+
+      const Gap(24),
+      Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pushNamed(context, RoutesName.kepribadianScreen);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+          icon: const Icon(
+            Icons.psychology_alt_rounded,
+            color: Colors.white,
+          ),
+          label: const Text(
+            'Lihat Detail Kepribadian',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
   Widget _buildNoPersonalityData() {

@@ -185,33 +185,48 @@ class _RiasecTestScreenState extends State<RiasecTestScreen> {
   }
 
   void _nextPage() {
-    // Pause all videos when navigating to the next page
+    print("Navigating to next page - pausing all videos");
+    // Only pause videos, don't dispose them
     VideoControllerManager().pauseAll();
+
+    // Mark all videos in current view as needing reset
+    _resetCurrentPageVideos();
 
     if (_isLastQuestionPage) {
       _nextCategory();
     } else {
       setState(() {
-        _currentQuestionIndex += 2; // Move to next 2 questions
+        _currentQuestionIndex += 2;
       });
     }
   }
 
   void _previousPage() {
-    // Pause all videos when navigating to the previous page
+    print("Navigating to previous page - pausing all videos");
+    // Only pause videos, don't dispose them
     VideoControllerManager().pauseAll();
+
+    // Mark all videos in current view as needing reset
+    _resetCurrentPageVideos();
 
     if (_currentQuestionIndex > 0) {
       setState(() {
-        _currentQuestionIndex = math.max(
-            0, _currentQuestionIndex - 2); // Ensure it never goes below 0
+        _currentQuestionIndex = math.max(0, _currentQuestionIndex - 2);
       });
     } else if (_currentCategoryIndex > 0) {
-      // Only call _previousCategory if we're at the first question of current category
       _previousCategory();
     }
   }
 
+// Helper method to reset videos on current page
+  void _resetCurrentPageVideos() {
+    // We'll notify question items that they need to reset their video state
+    // This is handled by adding a new field to track when navigation happens
+    _navigationCounter++;
+  }
+
+// Add this field to the class variables section at the top of the class
+  int _navigationCounter = 0;
   void _nextCategory() {
     // Pause all videos when changing categories
     VideoControllerManager().pauseAll();
@@ -476,8 +491,9 @@ class _RiasecTestScreenState extends State<RiasecTestScreen> {
                           categoryColor: categoryColor,
                           onToggle: _toggleQuestion,
                           currentCategory: currentType.kategori,
+                          navigationCounter: _navigationCounter,
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

@@ -89,6 +89,25 @@ class JobRecommendationService {
       final jobDetailsRows =
           await SheetService.rekomPekerjaanSheet!.values.allRows();
 
+      // Get column index for mata pelajaran
+      int mapelColIndex = -1;
+      if (jobDetailsRows.isNotEmpty) {
+        for (int i = 0; i < jobDetailsRows[0].length; i++) {
+          String header = jobDetailsRows[0][i].toString().toLowerCase();
+          if (header.contains("mapel") ||
+              header.contains("mata pelajaran") ||
+              header.contains("subject")) {
+            mapelColIndex = i;
+            break;
+          }
+        }
+        // Jika tidak ditemukan header yang cocok, coba gunakan kolom 5 (sesuai gambar)
+        if (mapelColIndex == -1 && jobDetailsRows[0].length > 5) {
+          mapelColIndex = 5;
+        }
+        debugPrint("Mata pelajaran column index: $mapelColIndex");
+      }
+
       for (int i = 1; i < jobDetailsRows.length; i++) {
         if (jobDetailsRows[i].isNotEmpty && jobDetailsRows[i].length > 1) {
           String jobName = jobDetailsRows[i][1].trim();
@@ -101,6 +120,16 @@ class JobRecommendationService {
                   job.toLowerCase().contains(jobName.toLowerCase()) ||
                   jobName.toLowerCase().contains(job.toLowerCase()))) {
             debugPrint("Found matching job detail: $jobName");
+
+            // Get mapel data if available
+            String mapelData = "";
+            if (mapelColIndex != -1 &&
+                jobDetailsRows[i].length > mapelColIndex &&
+                jobDetailsRows[i][mapelColIndex].toString().isNotEmpty) {
+              mapelData = jobDetailsRows[i][mapelColIndex].toString().trim();
+              debugPrint("Mata pelajaran for $jobName: $mapelData");
+            }
+
             recommendations.add(JobRecommendationModel(
               id: jobDetailsRows[i][0],
               pekerjaan: jobName,
@@ -110,6 +139,7 @@ class JobRecommendationService {
                   jobDetailsRows[i].length > 3 ? jobDetailsRows[i][3] : "",
               nextStep:
                   jobDetailsRows[i].length > 4 ? jobDetailsRows[i][4] : "",
+              mapel: mapelData,
             ));
           }
         }

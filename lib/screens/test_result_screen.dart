@@ -1226,8 +1226,12 @@ class RiasecResultsScreenState extends State<RiasecResultsScreen>
                 onPressed: () {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    RoutesName.testIntroScreen,
+                    RoutesName.menuScreen,
                     (route) => false,
+                  );
+                  Navigator.pushNamed(
+                    context,
+                    RoutesName.testIntroScreen,
                   );
                 },
                 icon: const Icon(

@@ -229,23 +229,23 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   void togglePlayPause() {
-    setState(() {
-      if (controller.value.isPlaying) {
-        controller.pause();
+    if (controller.value.isPlaying) {
+      controller.pause();
+      setState(() {
         showControls = true;
-        _hideControlsTimer?.cancel();
-      } else {
-        if (isCompleted) {
-          controller.seekTo(Duration.zero);
-          setState(() {
-            isCompleted = false;
-          });
-        }
-        controller.play();
-        controllerManager.pauseAllExcept(controller);
-        _resetHideControlsTimer();
+      });
+      _hideControlsTimer?.cancel();
+    } else {
+      if (isCompleted) {
+        controller.seekTo(Duration.zero);
+        setState(() {
+          isCompleted = false;
+        });
       }
-    });
+      controller.play();
+      controllerManager.pauseAllExcept(controller);
+      _resetHideControlsTimer();
+    }
   }
 
   String formatDuration(Duration duration) {
@@ -285,41 +285,43 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          showControls = !showControls;
-          if (showControls) {
-            _resetHideControlsTimer();
-          } else {
-            _hideControlsTimer?.cancel();
-          }
-        });
-      },
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Video player
-          AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: VideoPlayer(controller),
-          ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Video player
+        AspectRatio(
+          aspectRatio: controller.value.aspectRatio,
+          child: VideoPlayer(controller),
+        ),
 
-          // Play/pause tap area
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: togglePlayPause,
-              child: Container(
-                color: Colors.transparent,
-              ),
+        // Tap area for showing/hiding controls
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                showControls = !showControls;
+                if (showControls) {
+                  _resetHideControlsTimer();
+                } else {
+                  _hideControlsTimer?.cancel();
+                }
+              });
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Container(
+              color: Colors.transparent,
             ),
           ),
+        ),
 
-          // Center play/pause button
-          if (showControls || !controller.value.isPlaying)
-            AnimatedOpacity(
-              opacity: showControls ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
+        // Center play/pause button
+        if (showControls || !controller.value.isPlaying)
+          AnimatedOpacity(
+            opacity: showControls ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            child: GestureDetector(
+              onTap: togglePlayPause,
+              behavior: HitTestBehavior.opaque,
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -333,113 +335,113 @@ class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                 ),
               ),
             ),
+          ),
 
-          // Buffering indicator
-          if (isBuffering)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: Center(
+        // Buffering indicator
+        if (isBuffering)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Colors.white),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${(loadingProgress * 100).toInt()}% Loaded',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Bottom controls overlay
+        if (showControls)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AnimatedOpacity(
+              opacity: showControls ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.only(top: 30, bottom: 8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const CircularProgressIndicator(color: Colors.white),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${(loadingProgress * 100).toInt()}% Loaded',
-                      style: const TextStyle(color: Colors.white),
+                    // Progress slider
+                    SliderTheme(
+                      data: SliderThemeData(
+                        trackHeight: 4,
+                        thumbShape:
+                            const RoundSliderThumbShape(enabledThumbRadius: 6),
+                        overlayShape:
+                            const RoundSliderOverlayShape(overlayRadius: 14),
+                        thumbColor: Colors.white,
+                        activeTrackColor: Colors.red.shade600,
+                        inactiveTrackColor: Colors.white.withOpacity(0.3),
+                        overlayColor: Colors.red.shade200.withOpacity(0.4),
+                      ),
+                      child: Slider(
+                        value:
+                            controller.value.position.inMilliseconds.toDouble(),
+                        min: 0,
+                        max:
+                            controller.value.duration.inMilliseconds.toDouble(),
+                        onChanged: (value) {
+                          final newPosition =
+                              Duration(milliseconds: value.toInt());
+                          controller.seekTo(newPosition);
+                        },
+                      ),
+                    ),
+
+                    // Time and controls row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          // Current position
+                          Text(
+                            formatDuration(controller.value.position),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          // Duration
+                          Text(
+                            formatDuration(controller.value.duration),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-
-          // Bottom controls overlay
-          if (showControls)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: AnimatedOpacity(
-                opacity: showControls ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                  padding: const EdgeInsets.only(top: 30, bottom: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Progress slider
-                      SliderTheme(
-                        data: SliderThemeData(
-                          trackHeight: 4,
-                          thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 6),
-                          overlayShape:
-                              const RoundSliderOverlayShape(overlayRadius: 14),
-                          thumbColor: Colors.white,
-                          activeTrackColor: Colors.red.shade600,
-                          inactiveTrackColor: Colors.white.withOpacity(0.3),
-                          overlayColor: Colors.red.shade200.withOpacity(0.4),
-                        ),
-                        child: Slider(
-                          value: controller.value.position.inMilliseconds
-                              .toDouble(),
-                          min: 0,
-                          max: controller.value.duration.inMilliseconds
-                              .toDouble(),
-                          onChanged: (value) {
-                            final newPosition =
-                                Duration(milliseconds: value.toInt());
-                            controller.seekTo(newPosition);
-                          },
-                        ),
-                      ),
-
-                      // Time and controls row
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          children: [
-                            // Current position
-                            Text(
-                              formatDuration(controller.value.position),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-
-                            const Spacer(),
-
-                            // Duration
-                            Text(
-                              formatDuration(controller.value.duration),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
