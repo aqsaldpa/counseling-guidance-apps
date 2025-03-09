@@ -1194,7 +1194,7 @@ class RiasecResultsScreenState extends State<RiasecResultsScreen>
             ElevatedButton.icon(
               onPressed: () async {
                 final Uri url = Uri.parse(
-                    'https://wa.me/+62895391442221/?text=${Uri.parse('Halo Kak')}');
+                    'https://wa.me/62895391442221/?text=${Uri.parse('Halo Kak, Saya mau bimbingan')}');
                 await launchUrl(url);
               },
               style: ElevatedButton.styleFrom(

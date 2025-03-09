@@ -150,7 +150,7 @@ class _MenuScreenState extends State<MenuScreen> with TickerProviderStateMixin {
   void _handleMenuItemTap(BuildContext context, MenuItem item) async {
     if (item.isWhatsApp) {
       final Uri url = Uri.parse(
-          'https://wa.me/6282132310801/?text=${Uri.parse('Halo Kak')}');
+          'https://wa.me/62895391442221/?text=${Uri.parse('Halo Kak, Saya mau bimbingan')}');
       await launchUrl(url);
     } else if (item.requiresPersonalityData && !hasPersonalityData) {
       _showPersonalityTestRequiredDialog(context, item);
